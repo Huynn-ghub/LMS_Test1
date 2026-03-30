@@ -5,7 +5,7 @@ import Course from '../models/Course.js';
  */
 
 export const findPublished = ({ category, search, level, minPrice, maxPrice, page = 1, limit = 12 } = {}) => {
-  const query = { status: 'published' };
+  const query = { status: 'published', reviewStatus: 'approved' };
 
   if (category) query.category = category;
   if (level) query.level = level;
@@ -33,7 +33,7 @@ export const findPublished = ({ category, search, level, minPrice, maxPrice, pag
 };
 
 export const countPublished = (query = {}) =>
-  Course.countDocuments({ status: 'published', ...query });
+  Course.countDocuments({ status: 'published', reviewStatus: 'approved', ...query });
 
 export const findById = (id) =>
   Course.findById(id)

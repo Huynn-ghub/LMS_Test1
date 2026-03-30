@@ -28,7 +28,9 @@ export const getPublishedCourses = async ({ category, search, level, minPrice, m
 export const getCourseDetail = async (id) => {
   const course = await courseRepo.findById(id);
   if (!course) throw new Error('Không tìm thấy khoá học');
-  if (course.status !== 'published') throw new Error('Khoá học chưa được công khai');
+  if (course.status !== 'published' || course.reviewStatus !== 'approved') {
+    throw new Error('Khoá học chưa được công khai');
+  }
   return course;
 };
 

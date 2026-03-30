@@ -29,7 +29,7 @@ export const getCourse = asyncHandler(async (req, res) => {
   const ownerId = course.instructor?._id?.toString() || course.instructor?.toString();
   const isOwnerOrAdmin = userId && (req.user?.role === 'admin' || userId === ownerId);
 
-  if (course.status !== 'published' && !isOwnerOrAdmin) {
+  if ((course.status !== 'published' || course.reviewStatus !== 'approved') && !isOwnerOrAdmin) {
     res.status(404);
     throw new Error('Khoá học không tồn tại hoặc chưa được công khai');
   }
