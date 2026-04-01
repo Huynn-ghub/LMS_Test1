@@ -97,7 +97,10 @@ function CurriculumTab({ courseId }) {
         ...(type === 'video' && { video_url: '', duration: 0 }),
         ...(type === 'text'  && { text_content: '' }),
       };
-      await lessonAPI.create(chapterId, payload);
+      const res = await lessonAPI.create(chapterId, payload);
+      if (res.data?.reReviewed) {
+        toast(res.data.message, { icon: '⏳', duration: 4000 });
+      }
       loadChapters();
     } catch (e) { toast.error(e.response?.data?.message || 'Lỗi khi thêm bài học'); }
     finally { setSav(`add-${chapterId}-${type}`, false); }
@@ -106,16 +109,26 @@ function CurriculumTab({ courseId }) {
   const saveLessonTitle = async (lesson, newTitle) => {
     if (!newTitle.trim() || newTitle === lesson.title) return;
     setSav(`lt-${lesson._id}`, true);
-    try { await lessonAPI.update(lesson._id, { title: newTitle }); }
-    catch { toast.error('Lỗi lưu tên bài'); }
+    try {
+      const res = await lessonAPI.update(lesson._id, { title: newTitle });
+      if (res.data?.reReviewed) {
+        toast('Khoá học đã gửi lại Admin duyệt do nội dung thay đổi ⚠️', { icon: '⏳' });
+        loadChapters();
+      }
+    } catch { toast.error('Lỗi lưu tên bài'); }
     finally { setSav(`lt-${lesson._id}`, false); }
   };
 
   const saveLessonContent = async (lesson, patch) => {
     setSav(`lc-${lesson._id}`, true);
     try {
-      await lessonAPI.update(lesson._id, { ...patch });
-      toast.success('Đã lưu nội dung!');
+      const res = await lessonAPI.update(lesson._id, { ...patch });
+      const msg = res.data?.message || 'Đã lưu nội dung!';
+      if (res.data?.reReviewed) {
+        toast(msg, { icon: '⏳', duration: 4000 });
+      } else {
+        toast.success('Đã lưu nội dung!');
+      }
       loadChapters();
     } catch { toast.error('Lỗi khi lưu nội dung'); }
     finally { setSav(`lc-${lesson._id}`, false); }
@@ -123,8 +136,15 @@ function CurriculumTab({ courseId }) {
 
   const deleteLesson = async (lId) => {
     if (!window.confirm('Xoá bài học này?')) return;
-    try { await lessonAPI.delete(lId); loadChapters(); }
-    catch { toast.error('Lỗi khi xoá'); }
+    try {
+      const res = await lessonAPI.delete(lId);
+      if (res.data?.reReviewed) {
+        toast(res.data.message, { icon: '⏳', duration: 4000 });
+      } else {
+        toast.success('Xoá bài học thành công');
+      }
+      loadChapters();
+    } catch { toast.error('Lỗi khi xoá'); }
   };
 
   // ── Lesson content editor (inline) ──

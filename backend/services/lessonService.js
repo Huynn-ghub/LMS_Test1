@@ -7,6 +7,23 @@ import * as chapterRepo from '../repositories/chapterRepository.js';
  */
 
 /**
+ * Helper: Nếu khoá học đang được duyệt (approved), tự động reset về pending
+ * để Admin duyệt lại sau khi nội dung bài học thay đổi.
+ * Không áp dụng cho draft hoặc pending/rejected (đã được xử lý ở flow khác).
+ */
+const triggerReReviewIfApproved = async (courseId) => {
+  const course = await courseRepo.findById(courseId);
+  if (course && course.status === 'published' && course.reviewStatus === 'approved') {
+    await courseRepo.updateCourse(courseId, {
+      reviewStatus: 'pending',
+      rejectionReason: '',
+    });
+    return true; // đã reset
+  }
+  return false;
+};
+
+/**
  * Lấy tất cả bài học của một khoá học
  */
 export const getLessonsByCourse = async (courseId) => {
@@ -62,7 +79,10 @@ export const createLesson = async (chapterId, instructorId, data) => {
     totalDuration: Math.round(totalDuration / 60),
   });
 
-  return lesson;
+  // 6. Nếu khoá học đã được duyệt → gửi lại để Admin duyệt nội dung mới
+  const reReviewed = await triggerReReviewIfApproved(chapter.course);
+
+  return { lesson, reReviewed };
 };
 
 /**
@@ -88,7 +108,10 @@ export const updateLesson = async (lessonId, instructorId, data) => {
     await courseRepo.updateCourse(lesson.course, { totalDuration: Math.round(totalDuration / 60) });
   }
 
-  return updated;
+  // 5. Nếu khoá học đã được duyệt → gửi lại để Admin duyệt nội dung mới
+  const reReviewed = await triggerReReviewIfApproved(lesson.course);
+
+  return { lesson: updated, reReviewed };
 };
 
 /**
@@ -115,5 +138,8 @@ export const deleteLesson = async (lessonId, instructorId) => {
   const totalDuration = lessons.reduce((sum, l) => sum + (l.duration || 0), 0);
   await courseRepo.updateCourse(courseId, { totalLectures, totalDuration: Math.round(totalDuration / 60) });
 
-  return { message: 'Xoá bài học thành công' };
+  // 5. Nếu khoá học đã được duyệt → gửi lại để Admin duyệt nội dung mới
+  const reReviewed = await triggerReReviewIfApproved(courseId);
+
+  return { message: 'Xoá bài học thành công', reReviewed };
 };

@@ -30,7 +30,7 @@ export const getLesson = asyncHandler(async (req, res) => {
  * @access  Private (instructor of the course)
  */
 export const createLesson = asyncHandler(async (req, res) => {
-  const lesson = await lessonService.createLesson(
+  const { lesson, reReviewed } = await lessonService.createLesson(
     req.params.courseId,
     req.user._id,
     req.body
@@ -38,7 +38,10 @@ export const createLesson = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     data: lesson,
-    message: 'Tạo bài học thành công!',
+    reReviewed,
+    message: reReviewed
+      ? 'Tạo bài học thành công! Khoá học đã được gửi lại để Admin duyệt nội dung mới.'
+      : 'Tạo bài học thành công!',
   });
 });
 
@@ -48,15 +51,18 @@ export const createLesson = asyncHandler(async (req, res) => {
  * @access  Private (instructor of the course)
  */
 export const createLessonInChapter = asyncHandler(async (req, res) => {
-  const lesson = await lessonService.createLesson(
-    req.params.chapterId,  // ← dùng chapterId thay vì courseId
+  const { lesson, reReviewed } = await lessonService.createLesson(
+    req.params.chapterId,
     req.user._id,
     req.body
   );
   res.status(201).json({
     success: true,
     data: lesson,
-    message: 'Tạo bài học thành công!',
+    reReviewed,
+    message: reReviewed
+      ? 'Tạo bài học thành công! Khoá học đã được gửi lại để Admin duyệt nội dung mới.'
+      : 'Tạo bài học thành công!',
   });
 });
 
@@ -66,7 +72,7 @@ export const createLessonInChapter = asyncHandler(async (req, res) => {
  * @access  Private (instructor of the course)
  */
 export const updateLesson = asyncHandler(async (req, res) => {
-  const lesson = await lessonService.updateLesson(
+  const { lesson, reReviewed } = await lessonService.updateLesson(
     req.params.id,
     req.user._id,
     req.body
@@ -74,7 +80,10 @@ export const updateLesson = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: lesson,
-    message: 'Cập nhật bài học thành công!',
+    reReviewed,
+    message: reReviewed
+      ? 'Cập nhật thành công! Khoá học đã được gửi lại để Admin duyệt nội dung mới.'
+      : 'Cập nhật bài học thành công!',
   });
 });
 
@@ -85,5 +94,11 @@ export const updateLesson = asyncHandler(async (req, res) => {
  */
 export const deleteLesson = asyncHandler(async (req, res) => {
   const result = await lessonService.deleteLesson(req.params.id, req.user._id);
-  res.json({ success: true, ...result });
+  res.json({
+    success: true,
+    reReviewed: result.reReviewed,
+    message: result.reReviewed
+      ? 'Xoá bài học thành công! Khoá học đã được gửi lại để Admin duyệt nội dung mới.'
+      : result.message,
+  });
 });
