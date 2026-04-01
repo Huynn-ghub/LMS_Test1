@@ -1,5 +1,6 @@
 import * as courseRepo from '../repositories/courseRepository.js';
 import * as categoryRepo from '../repositories/categoryRepository.js';
+import Lesson from '../models/Lesson.js';
 
 /**
  * Course Service — business logic for course management
@@ -75,6 +76,8 @@ export const createCourse = async (instructorId, instructorStatus, courseData) =
     instructor: instructorId,
     status,
     publishedAt,
+    // Khi tạo ở trạng thái published = gửi duyệt ngay
+    reviewStatus: status === 'published' ? 'pending' : undefined,
   });
 };
 
@@ -91,7 +94,14 @@ export const updateCourse = async (courseId, instructorId, updateData) => {
     if (!cat) throw new Error('Danh mục không tồn tại');
   }
 
-  return courseRepo.updateCourse(courseId, updateData);
+  // Nếu khoá học đang bị rejected và instructor sửa lại → reset về pending để gửi duyệt lại
+  const finalData = { ...updateData };
+  if (course.reviewStatus === 'rejected' && course.status === 'published') {
+    finalData.reviewStatus = 'pending';
+    finalData.rejectionReason = '';
+  }
+
+  return courseRepo.updateCourse(courseId, finalData);
 };
 
 /**
@@ -101,9 +111,23 @@ export const publishCourse = async (courseId, instructorId) => {
   const course = await courseRepo.findByIdAndInstructor(courseId, instructorId);
   if (!course) throw new Error('Không tìm thấy khoá học hoặc bạn không có quyền');
 
+  // Không cho gửi lại khi đang chờ duyệt
+  if (course.status === 'published' && course.reviewStatus === 'pending') {
+    throw new Error('Khoá học đang chờ Admin duyệt, không thể gửi lại');
+  }
+
+  // Kiểm tra phải có ít nhất 1 bài học
+  const lessonCount = await Lesson.countDocuments({ course: courseId });
+  if (lessonCount === 0) {
+    throw new Error('Khoá học phải có ít nhất 1 bài học trước khi gửi duyệt');
+  }
+
+  // Gửi duyệt → status = published + reviewStatus = pending
   return courseRepo.updateCourse(courseId, {
     status: 'published',
     publishedAt: new Date(),
+    reviewStatus: 'pending',
+    rejectionReason: '',
   });
 };
 

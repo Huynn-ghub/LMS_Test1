@@ -31,7 +31,7 @@ export const getCourseDetailForReview = async (courseId) => {
     throw new Error('Không tìm thấy khoá học');
   }
   if (course.status !== 'published') {
-    throw new Error('Chi co the duyet khoa hoc da duoc giang vien gui xuat ban');
+    throw new Error('Chỉ có thể xem duyệt khoá học đã được giảng viên gửi xuất bản');
   }
   return course;
 };
@@ -48,7 +48,7 @@ export const approveCourse = async (courseId, adminId) => {
   }
 
   if (course.status !== 'published') {
-    throw new Error('Chi co the duyet khoa hoc da duoc giang vien gui xuat ban');
+    throw new Error('Chỉ có thể duyệt khoá học đã được giảng viên gửi xuất bản');
   }
 
   if (course.reviewStatus !== 'pending') {
@@ -72,7 +72,7 @@ export const rejectCourse = async (courseId, adminId, rejectionReason = '') => {
   }
 
   if (course.status !== 'published') {
-    throw new Error('Chi co the tu choi khoa hoc da duoc giang vien gui xuat ban');
+    throw new Error('Chỉ có thể từ chối khoá học đã được giảng viên gửi xuất bản');
   }
 
   if (course.reviewStatus !== 'pending') {

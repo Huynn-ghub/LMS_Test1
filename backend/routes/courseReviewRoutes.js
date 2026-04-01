@@ -1,6 +1,10 @@
 /**
  * Course Review Routes
  * Routes for admin to review and approve/reject courses
+ *
+ * ⚠️  QUAN TRỌNG: static routes (pending, approved, rejected) phải đứng TRƯỚC
+ *     dynamic route (/:id/...) để Express không nhầm "pending"/"approved"/"rejected"
+ *     thành một :id param.
  */
 import express from 'express';
 import {
@@ -18,69 +22,45 @@ import { rejectCourseSchema } from '../validators/courseReview.validator.js';
 
 const router = express.Router();
 
-// ── Admin Only ────────────────────────────────────────────────────
-// Protect: must be authenticated
-// Authorize: must be admin
+// ── Middleware chung: tất cả routes bên dưới đều yêu cầu admin ────
+const adminOnly = [protect, authorize('admin')];
+
+// ─────────────────────────────────────────────────────────────────
+// STATIC ROUTES — phải đứng TRƯỚC /:id để tránh conflict
+// ─────────────────────────────────────────────────────────────────
 
 /**
- * GET /api/admin/courses/pending - Get all pending courses
+ * GET /api/admin/courses/pending  — Danh sách khoá học chờ duyệt
  */
-router.get(
-  '/pending',
-  protect,
-  authorize('admin'),
-  getPendingCourses
-);
+router.get('/pending', ...adminOnly, getPendingCourses);
 
 /**
- * GET /api/admin/courses/:id/review - Get course detail for review
+ * GET /api/admin/courses/approved — Danh sách khoá học đã duyệt
  */
-router.get(
-  '/:id/review',
-  protect,
-  authorize('admin'),
-  getCourseForReview
-);
+router.get('/approved', ...adminOnly, getApprovedCourses);
 
 /**
- * PATCH /api/admin/courses/:id/approve - Approve course
+ * GET /api/admin/courses/rejected — Danh sách khoá học bị từ chối
  */
-router.patch(
-  '/:id/approve',
-  protect,
-  authorize('admin'),
-  approveCourse
-);
+router.get('/rejected', ...adminOnly, getRejectedCourses);
+
+// ─────────────────────────────────────────────────────────────────
+// DYNAMIC ROUTES — theo :id
+// ─────────────────────────────────────────────────────────────────
 
 /**
- * PATCH /api/admin/courses/:id/reject - Reject course
+ * GET /api/admin/courses/:id/review — Chi tiết khoá học để duyệt
  */
-router.patch(
-  '/:id/reject',
-  protect,
-  authorize('admin'),
-  validate(rejectCourseSchema),
-  rejectCourse
-);
+router.get('/:id/review', ...adminOnly, getCourseForReview);
 
 /**
- * GET /api/admin/courses/approved - Get all approved courses
+ * PATCH /api/admin/courses/:id/approve — Duyệt khoá học
  */
-router.get(
-  '/approved',
-  protect,
-  authorize('admin'),
-  getApprovedCourses
-);
+router.patch('/:id/approve', ...adminOnly, approveCourse);
 
 /**
- * GET /api/admin/courses/rejected - Get all rejected courses
+ * PATCH /api/admin/courses/:id/reject — Từ chối khoá học
  */
-router.get(
-  '/rejected',
-  protect,
-  authorize('admin'),
-  getRejectedCourses
-);
+router.patch('/:id/reject', ...adminOnly, validate(rejectCourseSchema), rejectCourse);
 
 export default router;

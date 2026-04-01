@@ -25,13 +25,31 @@ export const getLesson = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Tạo bài học mới trong khoá học
+ * @desc    Tạo bài học mới trong khoá học (nested dưới course)
  * @route   POST /api/courses/:courseId/lessons
  * @access  Private (instructor of the course)
  */
 export const createLesson = asyncHandler(async (req, res) => {
   const lesson = await lessonService.createLesson(
     req.params.courseId,
+    req.user._id,
+    req.body
+  );
+  res.status(201).json({
+    success: true,
+    data: lesson,
+    message: 'Tạo bài học thành công!',
+  });
+});
+
+/**
+ * @desc    Tạo bài học mới trong chương (nested dưới chapter)
+ * @route   POST /api/chapters/:chapterId/lessons
+ * @access  Private (instructor of the course)
+ */
+export const createLessonInChapter = asyncHandler(async (req, res) => {
+  const lesson = await lessonService.createLesson(
+    req.params.chapterId,  // ← dùng chapterId thay vì courseId
     req.user._id,
     req.body
   );

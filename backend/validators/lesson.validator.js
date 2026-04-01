@@ -60,9 +60,8 @@ export const createLessonSchema = Joi.object({
   // Quiz fields
   questions: Joi.when('type', {
     is: 'quiz',
-    then: Joi.array().items(questionSchema).min(1).required().messages({
-      'array.min':    'Quiz phải có ít nhất 1 câu hỏi',
-      'any.required': 'Danh sách câu hỏi là bắt buộc',
+    then: Joi.array().items(questionSchema).min(0).optional().default([]).messages({
+      'array.min': 'Danh sách câu hỏi không hợp lệ',
     }),
     otherwise: Joi.any().strip(),
   }),

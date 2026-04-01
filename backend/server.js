@@ -18,6 +18,7 @@ import courseReviewRoutes from './routes/courseReviewRoutes.js';
 import enrollmentRoutes from './routes/enrollmentRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import lessonRoutes, { lessonStandaloneRouter } from './routes/lessonRoutes.js';
+import chapterRoutes, { chapterStandaloneRouter, chapterLessonRouter } from './routes/chapterRoutes.js';
 
 dotenv.config();
 
@@ -49,10 +50,13 @@ app.use('/api/instructors', instructorRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/admin/courses', courseReviewRoutes);
-app.use('/api/courses/:courseId/lessons', lessonRoutes);
+app.use('/api/courses/:courseId/chapters', chapterRoutes);        // GET/POST chapters
+app.use('/api/courses/:courseId/lessons', lessonRoutes);          // GET lessons by course
+app.use('/api/chapters', chapterStandaloneRouter);                // GET/PUT/DELETE /chapters/:id
+app.use('/api/chapters/:chapterId/lessons', chapterLessonRouter); // GET/POST lessons in chapter
+app.use('/api/lessons', lessonStandaloneRouter);                  // GET/PUT/DELETE /lessons/:id
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/stats', statsRoutes);
-app.use('/api/lessons', lessonStandaloneRouter);
 
 // ─── Health Check ─────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
